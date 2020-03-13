@@ -95,7 +95,7 @@ public class ImageConverterUtil {
         try {
             //final int width = (int)(image.getWidth() * resizeRatio);
             //final int height = (int)(image.getHeight() * resizeRatio);
-            Bitmap resultImage = Bitmap.createScaledBitmap(image, width, height, true);
+            Bitmap resultImage = Bitmap.createScaledBitmap(image, width, height, false);
             if (reuseInputImage == false) {
                 image.recycle();
             }
