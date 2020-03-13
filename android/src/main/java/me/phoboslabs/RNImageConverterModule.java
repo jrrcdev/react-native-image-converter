@@ -48,8 +48,8 @@ public class RNImageConverterModule extends ReactContextBaseJavaModule {
   private static final String GRAYSCALE_KEY = "grayscale";
   private static final String BASE64_KEY = "base64";
   private static final String RESIZE_RATIO_KEY = "resizeRatio";
-   private static final String IMAGE_WIDTH_KEY = "width";
-   private static final String IMAGE_HEIGHT_KEY = "height";
+  private static final String IMAGE_WIDTH_KEY = "widtha";
+  private static final String IMAGE_HEIGHT_KEY = "height";
   private static final String IMAGE_QUALITY_KEY = "imageQuality";
 
   private static final String ANDROID_URI_FILE_SCHEME = "file://";
