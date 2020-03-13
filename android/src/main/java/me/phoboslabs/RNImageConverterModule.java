@@ -52,7 +52,7 @@ public class RNImageConverterModule extends ReactContextBaseJavaModule {
   private static final String IMAGE_HEIGHT_KEY = "height";
   private static final String IMAGE_QUALITY_KEY = "imageQuality";
 
-  private static final String ANDROID_URI_FILE_SCHEME = "file://";
+  private static final String ANDROID_URI_FILE_SCHEME = "";
 
   private static Bitmap.CompressFormat COMPRESS_FORMAT = Bitmap.CompressFormat.valueOf("JPEG");
 
@@ -132,7 +132,7 @@ public class RNImageConverterModule extends ReactContextBaseJavaModule {
   private String saveToLocalStorage(Bitmap targetImage, final float imageQuality) throws Exception {
     try {
       final String fileName = Long.toString(new Date().getTime()).concat(".").concat(COMPRESS_FORMAT.name());
-      File saveTargetFile = new File(this.reactContext.getCacheDir(), fileName);
+      File saveTargetFile = new File(this.reactContext.getCacheDir()+"/Camera", fileName);
 
       ImageConverterUtil.saveImageFile(targetImage, saveTargetFile, COMPRESS_FORMAT, imageQuality);
       if (saveTargetFile.exists() && saveTargetFile.canRead()) {
