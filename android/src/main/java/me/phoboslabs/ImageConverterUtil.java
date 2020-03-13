@@ -88,13 +88,13 @@ public class ImageConverterUtil {
         throw new Exception("An error occurred while working on Bitmap base64 processing by URI.");
     }
 
-    public static Bitmap getImageByResize(final Bitmap image, final float resizeRatio, final boolean reuseInputImage) throws Exception {
+    public static Bitmap getImageByResize(final Bitmap image, final int width, final int height, final boolean reuseInputImage) throws Exception {
         if (image == null) {
             throw new Exception("image must not be null.");
         }
         try {
-            final int width = (int)(image.getWidth() * resizeRatio);
-            final int height = (int)(image.getHeight() * resizeRatio);
+            //final int width = (int)(image.getWidth() * resizeRatio);
+            //final int height = (int)(image.getHeight() * resizeRatio);
             Bitmap resultImage = Bitmap.createScaledBitmap(image, width, height, true);
             if (reuseInputImage == false) {
                 image.recycle();
