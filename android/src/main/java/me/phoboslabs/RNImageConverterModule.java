@@ -48,6 +48,8 @@ public class RNImageConverterModule extends ReactContextBaseJavaModule {
   private static final String GRAYSCALE_KEY = "grayscale";
   private static final String BASE64_KEY = "base64";
   private static final String RESIZE_RATIO_KEY = "resizeRatio";
+   private static final String IMAGE_WIDTH_KEY = "width";
+   private static final String IMAGE_HEIGHT_KEY = "height";
   private static final String IMAGE_QUALITY_KEY = "imageQuality";
 
   private static final String ANDROID_URI_FILE_SCHEME = "file://";
@@ -70,10 +72,11 @@ public class RNImageConverterModule extends ReactContextBaseJavaModule {
         Bitmap sourceImage = ImageConverterUtil.getSourceImageByPath(this.reactContext, imageURI);
 
         Bitmap resizeImage = null;
-        if (data.hasKey(RESIZE_RATIO_KEY) == true) {
-          final float resizeRatio = Float.parseFloat(data.getString(RESIZE_RATIO_KEY));
-          if (resizeRatio > 0.0 && resizeRatio < 1.0) {
-            resizeImage = ImageConverterUtil.getImageByResize(sourceImage, resizeRatio, false);
+        if (data.hasKey(IMAGE_WIDTH_KEY) == true && data.hasKey(IMAGE_HEIGHT_KEY)==true) {
+          final int width = Integer.parseInt(data.getString(IMAGE_WIDTH_KEY));
+          final int height = Integer.parseInt(data.getString(IMAGE_HEIGHT_KEY));
+          if (width > 0 && height > 0) {
+            resizeImage = ImageConverterUtil.getImageByResize(sourceImage, width, height, false);
           }
         }
 
