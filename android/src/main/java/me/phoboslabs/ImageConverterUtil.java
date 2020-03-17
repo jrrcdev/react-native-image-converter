@@ -90,7 +90,7 @@ public class ImageConverterUtil {
     }
 
     public static Bitmap BITMAP_RESIZER(final Bitmap bitmap, final int newWidth, final  int newHeight) {    
-        Bitmap scaledBitmap = Bitmap.createBitmap(newWidth, newHeight, Config.ARGB_8888);
+        Bitmap scaledBitmap = Bitmap.createBitmap(newWidth, newHeight, Bitmap.Config.ARGB_8888);
     
         float ratioX = newWidth / (float) bitmap.getWidth();
         float ratioY = newHeight / (float) bitmap.getHeight();
