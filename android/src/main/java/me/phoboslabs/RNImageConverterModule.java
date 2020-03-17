@@ -76,7 +76,7 @@ public class RNImageConverterModule extends ReactContextBaseJavaModule {
           final int width = Integer.parseInt(data.getString(IMAGE_WIDTH_KEY));
           final int height = Integer.parseInt(data.getString(IMAGE_HEIGHT_KEY));
           if (width > 0 && height > 0) {
-            resizeImage = ImageConverterUtil.getImageByResize(sourceImage, width, height, false);
+            resizeImage = ImageConverterUtil.BITMAP_RESIZER(sourceImage, width, height);
           }
         }
 

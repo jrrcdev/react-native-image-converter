@@ -88,6 +88,24 @@ public class ImageConverterUtil {
         throw new Exception("An error occurred while working on Bitmap base64 processing by URI.");
     }
 
+    public static Bitmap BITMAP_RESIZER(final Bitmap bitmap, final int newWidth, final  int newHeight) {    
+        Bitmap scaledBitmap = Bitmap.createBitmap(newWidth, newHeight, Config.ARGB_8888);
+    
+        float ratioX = newWidth / (float) bitmap.getWidth();
+        float ratioY = newHeight / (float) bitmap.getHeight();
+        float middleX = newWidth / 2.0f;
+        float middleY = newHeight / 2.0f;
+    
+        Matrix scaleMatrix = new Matrix();
+        scaleMatrix.setScale(ratioX, ratioY, middleX, middleY);
+    
+        Canvas canvas = new Canvas(scaledBitmap);
+        canvas.setMatrix(scaleMatrix);
+        canvas.drawBitmap(bitmap, middleX - bitmap.getWidth() / 2, middleY - bitmap.getHeight() / 2, new Paint(Paint.FILTER_BITMAP_FLAG));
+    
+        return scaledBitmap;
+    }
+
     public static Bitmap getImageByResize(final Bitmap image, final int width, final int height, final boolean reuseInputImage) throws Exception {
         if (image == null) {
             throw new Exception("image must not be null.");
