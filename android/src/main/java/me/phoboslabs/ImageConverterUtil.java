@@ -4,6 +4,7 @@ import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.Canvas;
+import android.graphics.Matrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.net.Uri;
@@ -88,13 +89,35 @@ public class ImageConverterUtil {
         throw new Exception("An error occurred while working on Bitmap base64 processing by URI.");
     }
 
-    public static Bitmap getImageByResize(final Bitmap image, final float resizeRatio, final boolean reuseInputImage) throws Exception {
+    public static Bitmap BITMAP_RESIZER(final Bitmap bitmap, final int newWidth, final  int newHeight) {    
+        Bitmap scaledBitmap = Bitmap.createBitmap(newWidth, newHeight, Bitmap.Config.ARGB_8888);
+    
+        float ratioX = newWidth / (float) bitmap.getWidth();
+        float ratioY = newHeight / (float) bitmap.getHeight();
+        float middleX = newWidth / 2.0f;
+        float middleY = newHeight / 2.0f;
+    
+        Matrix scaleMatrix = new Matrix();
+        scaleMatrix.setScale(ratioX, ratioY, middleX, middleY);
+    
+        Canvas canvas = new Canvas(scaledBitmap);
+        canvas.setMatrix(scaleMatrix);
+        Paint paint = new Paint(Paint.FILTER_BITMAP_FLAG);
+        paint.setAntiAlias(true);
+        paint.setDither(true);
+        paint.setFilterBitmap(true);
+        canvas.drawBitmap(bitmap, middleX - bitmap.getWidth() / 2, middleY - bitmap.getHeight() / 2, paint);
+    
+        return scaledBitmap;
+    }
+
+    public static Bitmap getImageByResize(final Bitmap image, final int width, final int height, final boolean reuseInputImage) throws Exception {
         if (image == null) {
             throw new Exception("image must not be null.");
         }
         try {
-            final int width = (int)(image.getWidth() * resizeRatio);
-            final int height = (int)(image.getHeight() * resizeRatio);
+            //final int width = (int)(image.getWidth() * resizeRatio);
+            //final int height = (int)(image.getHeight() * resizeRatio);
             Bitmap resultImage = Bitmap.createScaledBitmap(image, width, height, true);
             if (reuseInputImage == false) {
                 image.recycle();
