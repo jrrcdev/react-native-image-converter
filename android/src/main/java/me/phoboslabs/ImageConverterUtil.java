@@ -1,5 +1,7 @@
 package me.phoboslabs;
 
+import android.annotation.SuppressLint;
+import android.content.ContentResolver;
 import android.content.Context;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -8,85 +10,152 @@ import android.graphics.Matrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.net.Uri;
+import android.support.annotation.NonNull;
+import android.support.annotation.Nullable;
 import android.util.Base64;
 
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.ByteArrayOutputStream;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+
+import okhttp3.Call;
+import okhttp3.Callback;
+import okhttp3.OkHttpClient;
+import okhttp3.Request;
+import okhttp3.Response;
 
 /**
  * @author kellin.me (Lee Kyoungil) [mailto:leekyoungil@gmail.com]
  */
 public class ImageConverterUtil {
+    private final static String IMAGE_JPEG = "image/jpeg";
+    private final static String IMAGE_PNG = "image/png";
+    private final static String SCHEME_DATA = "data";
+    private final static String SCHEME_HTTP = "http";
+    private final static String SCHEME_HTTPS = "https";
 
-    private static final String URI_DATA = "data";
-    private static final String URI_CONTENT = "content";
-
-    private static final List<String> URI_FILE_CONTENT = Collections.unmodifiableList(Arrays.asList("file", "content"));
-
-    public static Bitmap getSourceImageByPath(final Context context, final Uri imageURI) throws Exception {
-        if (imageURI == null) {
+    /**
+     * Load a Bitmap from a Uri which can either be Base64 encoded or a path to a file or content scheme
+     */
+    @Nullable
+    public static Bitmap getSourceImageByPath(final Context context, final Uri imageUri) throws Exception {
+        if (imageUri == null) {
             throw new Exception("imageURI must not be null.");
         }
 
-        final String imageURIScheme = imageURI.getScheme();
-
         Bitmap sourceImage = null;
-        if (StringUtils.isBlank(imageURIScheme) || URI_FILE_CONTENT.contains(imageURIScheme.toLowerCase())) {
-            sourceImage = loadBitmapImage(context, imageURI);
-        } else if (imageURIScheme.equalsIgnoreCase(URI_DATA)) {
-            sourceImage = loadBitmapImageByBase64(imageURI);
-        }
+        BitmapFactory.Options options = new BitmapFactory.Options();
 
-        if (sourceImage == null) {
-            throw new Exception("image can't be loaded by URI.");
+        final String imageUriScheme = imageUri.getScheme();
+        if (imageUriScheme == null || ContentResolver.SCHEME_CONTENT.equals(imageUriScheme) || ContentResolver.SCHEME_FILE.equals(imageUriScheme)) {
+            sourceImage = loadBitmapFromFile(context, imageUri, options);
+        } else if (SCHEME_DATA.equals(imageUriScheme)) {
+            sourceImage = loadBitmapFromBase64(imageUri, options);
+        } else if (SCHEME_HTTP.equals(imageUriScheme) || SCHEME_HTTPS.equals(imageUriScheme)) {
+            sourceImage = loadBitmapFromURL(imageUri, options);
         }
 
         return sourceImage;
     }
 
-    private static Bitmap loadBitmapImage(final Context context, final Uri imageURI) throws Exception {
-        BitmapFactory.Options options = new BitmapFactory.Options();
-        //options.inJustDecodeBounds = true;
-        if (imageURI.getScheme() == null || imageURI.getScheme().equalsIgnoreCase(URI_CONTENT) == false) {
-            try {
-                return BitmapFactory.decodeFile(imageURI.getEncodedPath(), options);
-            } catch (Exception ex) {
-                throw ex;
-            }
-        } else {
-            InputStream input = context.getContentResolver().openInputStream(imageURI);
+    /**
+     * Load a Bitmap using the {@link ContentResolver} of the current
+     * {@link Context} (for real files or gallery images for example).
+     *
+     * Note that, when options.inJustDecodeBounds = true, we actually expect sourceImage to remain
+     * as null (see https://developer.android.com/training/displaying-bitmaps/load-bitmap.html), so
+     * getting null sourceImage at the completion of this method is not always worthy of an error.
+     *
+     * Suppress the try-with-resources warning since Android Studio 3.0 extends support to all API levels.
+     * See https://developer.android.com/studio/write/java8-support.html#supported_features
+     */
+    @SuppressLint("NewApi")
+    @Nullable
+    private static Bitmap loadBitmapFromFile(final Context context, final Uri imageUri,
+                                             @NonNull final BitmapFactory.Options options) throws Exception {
+        Bitmap sourceImage = null;
+        final ContentResolver cr = context.getContentResolver();
+        try (final InputStream input = cr.openInputStream(imageUri)) {
             if (input != null) {
-                Bitmap sourceImage = BitmapFactory.decodeStream(input, null, options);
+                sourceImage = BitmapFactory.decodeStream(input, null, options);
                 input.close();
-                return sourceImage;
             }
-            throw new Exception("An error occurred while working on Bitmap processing by URI.");
+        } catch (FileNotFoundException e) {
+            throw new FileNotFoundException("Unable to load image into Bitmap: " + e.getMessage());
         }
+
+        return sourceImage;
     }
 
-    private static List<String> LIST_OF_IMAGE_TYPE = Collections.unmodifiableList(Arrays.asList("image/jpg", "image/jpeg", "image/png"));
+    /**
+     * Load a Bitmap from a Base64 encoded jpg or png.
+     * Format is as such:
+     * png: 'data:image/png;base64,iVBORw0KGgoAA...'
+     * jpg: 'data:image/jpeg;base64,/9j/4AAQSkZJ...'
+     */
+    @Nullable
+    private static Bitmap loadBitmapFromBase64(@NonNull final Uri imageUri,
+                                               @NonNull final BitmapFactory.Options options) {
+        Bitmap sourceImage = null;
+        final String imagePath = imageUri.getSchemeSpecificPart();
+        final int commaLocation = imagePath.indexOf(',');
+        if (commaLocation != -1) {
+            final String mimeType = imagePath.substring(0, commaLocation).replace('\\','/').toLowerCase();
+            final boolean isJpeg = mimeType.startsWith(IMAGE_JPEG);
+            final boolean isPng = !isJpeg && mimeType.startsWith(IMAGE_PNG);
 
-    private static Bitmap loadBitmapImageByBase64(final Uri imageURI) throws Exception {
-        final String imagePath = imageURI.getSchemeSpecificPart();
-        final int splitLocation = imagePath.indexOf(',');
-        if (splitLocation != -1) {
-            final String imageType = imagePath.substring(0, splitLocation).replace('\\', '/').toLowerCase();
-            if (LIST_OF_IMAGE_TYPE.contains(imageType)) {
-                final String base64EncodedImageString = imagePath.substring(splitLocation + 1);
-                final byte[] decodedStringArray = Base64.decode(base64EncodedImageString, Base64.DEFAULT);
-                return BitmapFactory.decodeByteArray(decodedStringArray, 0, decodedStringArray.length);
+            if (isJpeg || isPng) {
+                // base64 image. Convert to a bitmap.
+                final String encodedImage = imagePath.substring(commaLocation + 1);
+                final byte[] decodedString = Base64.decode(encodedImage, Base64.DEFAULT);
+                sourceImage = BitmapFactory.decodeByteArray(decodedString, 0, decodedString.length, options);
             }
         }
 
-        throw new Exception("An error occurred while working on Bitmap base64 processing by URI.");
+        return sourceImage;
+    }
+
+    /**
+     * Load a Bitmap from an http or https URL.
+     */
+    @Nullable
+    public static Bitmap loadBitmapFromURL(@NonNull final Uri imageUri,
+                                           @NonNull final BitmapFactory.Options options) throws IOException {
+        Bitmap sourceImage = null;
+        URL url = null;
+
+        try {
+            url = new URL(imageUri.toString());
+        } catch (MalformedURLException e) {
+            throw new MalformedURLException("Unable to load image from a malformed URL: " + e.getMessage());
+        }
+
+        OkHttpClient client = OkHttpClientProvider.getOkHttpClient();
+        Request request = new Request.Builder()
+            .url(url)
+            .build();
+
+        try (Response response = client.newCall(request).execute()) {
+            if (!response.isSuccessful()) throw new IOException("Unexpected code " + response.code());
+      
+            InputStream input = response.body().byteStream();
+            sourceImage = BitmapFactory.decodeStream(input);
+            input.close();
+        } catch (IOException e) {
+            throw new IOException("Unable to download image", e);
+        }
+
+        return sourceImage;
     }
 
     public static Bitmap BITMAP_RESIZER(final Bitmap bitmap, final int newWidth, final  int newHeight) {    
