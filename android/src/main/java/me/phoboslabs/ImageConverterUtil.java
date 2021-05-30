@@ -14,6 +14,12 @@ import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.util.Base64;
 
+import com.facebook.react.modules.network.OkHttpClientProvider;
+
+import com.squareup.okhttp.OkHttpClient;
+import com.squareup.okhttp.Request;
+import com.squareup.okhttp.Response;
+
 import org.apache.commons.lang3.StringUtils;
 
 import java.io.ByteArrayOutputStream;
@@ -28,11 +34,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-import okhttp3.Call;
-import okhttp3.Callback;
-import okhttp3.OkHttpClient;
-import okhttp3.Request;
-import okhttp3.Response;
 
 /**
  * @author kellin.me (Lee Kyoungil) [mailto:leekyoungil@gmail.com]
@@ -145,7 +146,9 @@ public class ImageConverterUtil {
             .url(url)
             .build();
 
-        try (Response response = client.newCall(request).execute()) {
+        try {
+            Response response = client.newCall(request).execute();
+
             if (!response.isSuccessful()) throw new IOException("Unexpected code " + response.code());
       
             InputStream input = response.body().byteStream();

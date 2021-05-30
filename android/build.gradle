@@ -35,6 +35,8 @@ repositories {
 dependencies {
     implementation 'com.facebook.react:react-native:0.20.1'
     implementation group: 'org.apache.commons', name: 'commons-lang3', version: '3.9'
+    implementation("com.squareup.okhttp3:okhttp:4.9.0")
+
 
 }
   
