@@ -10,8 +10,6 @@ import android.graphics.Matrix;
 import android.graphics.ColorMatrixColorFilter;
 import android.graphics.Paint;
 import android.net.Uri;
-import android.support.annotation.NonNull;
-import android.support.annotation.Nullable;
 import android.util.Base64;
 
 import com.facebook.react.modules.network.OkHttpClientProvider;
@@ -48,7 +46,7 @@ public class ImageConverterUtil {
     /**
      * Load a Bitmap from a Uri which can either be Base64 encoded or a path to a file or content scheme
      */
-    @Nullable
+    
     public static Bitmap getSourceImageByPath(final Context context, final Uri imageUri) throws Exception {
         if (imageUri == null) {
             throw new Exception("imageURI must not be null.");
@@ -81,9 +79,9 @@ public class ImageConverterUtil {
      * See https://developer.android.com/studio/write/java8-support.html#supported_features
      */
     @SuppressLint("NewApi")
-    @Nullable
+    
     private static Bitmap loadBitmapFromFile(final Context context, final Uri imageUri,
-                                             @NonNull final BitmapFactory.Options options) throws Exception {
+                                             final BitmapFactory.Options options) throws Exception {
         Bitmap sourceImage = null;
         final ContentResolver cr = context.getContentResolver();
         try (final InputStream input = cr.openInputStream(imageUri)) {
@@ -104,9 +102,9 @@ public class ImageConverterUtil {
      * png: 'data:image/png;base64,iVBORw0KGgoAA...'
      * jpg: 'data:image/jpeg;base64,/9j/4AAQSkZJ...'
      */
-    @Nullable
-    private static Bitmap loadBitmapFromBase64(@NonNull final Uri imageUri,
-                                               @NonNull final BitmapFactory.Options options) {
+    
+    private static Bitmap loadBitmapFromBase64(final Uri imageUri,
+                                               final BitmapFactory.Options options) {
         Bitmap sourceImage = null;
         final String imagePath = imageUri.getSchemeSpecificPart();
         final int commaLocation = imagePath.indexOf(',');
@@ -129,9 +127,9 @@ public class ImageConverterUtil {
     /**
      * Load a Bitmap from an http or https URL.
      */
-    @Nullable
-    public static Bitmap loadBitmapFromURL(@NonNull final Uri imageUri,
-                                           @NonNull final BitmapFactory.Options options) throws IOException {
+    
+    public static Bitmap loadBitmapFromURL(final Uri imageUri,
+                                           final BitmapFactory.Options options) throws IOException {
         Bitmap sourceImage = null;
         URL url = null;
 
